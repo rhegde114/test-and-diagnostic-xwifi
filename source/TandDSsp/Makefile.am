@@ -38,7 +38,7 @@ CcspTandDSsp_SOURCES = tad_rbus_apis.c ssp_messagebus_interface.c ssp_action_pri
 CcspTandDSsp_LDFLAGS = -lccsp_common -ldl -rdynamic -lrbus -lsyscfg -lsecure_wrapper -ltelemetry_msgsender -lcjson -lmsgpackc
 
 CcspTandDSsp_DEPENDENCIES = ${top_builddir}/source/LatencyMeasurement/TR-181/libLowLatency.la \
-                            ${top_builddir}/source/LatencyMeasurement/ServiceMonitor/libCcspTandDSsp_ServiceMonitor.la 
+                            ${top_builddir}/source/LatencyMeasurement/ServiceMonitor/libCcspTandDSsp_ServiceMonitor.la \
                             ${top_builddir}/source/xwifi_diagdata/xWifiMonitor/libCcspTandDSsp_xwifidiagdata.la
 
 if FEATURE_DEVICE_PRIORITIZATION
