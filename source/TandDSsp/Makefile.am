@@ -21,6 +21,7 @@ bin_PROGRAMS = CcspTandDSsp
 
 CcspTandDSsp_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include \
                         -I${top_srcdir}/source/LatencyMeasurement/ServiceMonitor/include \
+                        -I${top_srcdir}/source/xwifi_diagdata/xWifiMonitor/include \
                         -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing \
                         -I$(top_srcdir)/source/dmltad \
                         -I$(top_srcdir)/source/TandDSsp \
@@ -38,6 +39,7 @@ CcspTandDSsp_LDFLAGS = -lccsp_common -ldl -rdynamic -lrbus -lsyscfg -lsecure_wra
 
 CcspTandDSsp_DEPENDENCIES = ${top_builddir}/source/LatencyMeasurement/TR-181/libLowLatency.la \
                             ${top_builddir}/source/LatencyMeasurement/ServiceMonitor/libCcspTandDSsp_ServiceMonitor.la 
+                            ${top_builddir}/source/xwifi_diagdata/xWifiMonitor/libCcspTandDSsp_xwifidiagdata.la
 
 if FEATURE_DEVICE_PRIORITIZATION
 CcspTandDSsp_DEPENDENCIES += ${top_builddir}/source/DevicePrioritization/TR-181/libDevicePrio.la

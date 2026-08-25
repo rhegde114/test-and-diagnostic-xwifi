@@ -149,11 +149,13 @@ AM_CONDITIONAL(FEATURE_WAREHOUSE_DIAGNOSTICS, test "x$WAREHOUSE_DIAGNOSTICS_ENAB
 
 AC_CONFIG_FILES(
   source/LatencyMeasurement/ServiceMonitor/Makefile
+  source/xwifi_diagdata/xWifiMonitor/Makefile
 	source/TandDSsp/Makefile
 	source/dmltad/Makefile
 	source/util/Makefile
 	source/Makefile
 	source/xle_selfheal/Makefile
+  source/xwifi_diagdata/xwifi_client_info/Makefile
   source-arm/diagnostic/BbhmDiagIpPing/Makefile
   source-arm/dmltad/Makefile
   source/ImageHealthChecker/Makefile

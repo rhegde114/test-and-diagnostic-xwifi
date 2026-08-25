@@ -46,6 +46,7 @@
 #include "stdlib.h"
 #include "safec_lib_common.h"
 #include "ServiceMonitor.h"
+#include "xwifiServiceMonitor.h"
 #include "tad_rbus_apis.h"
 #include "lowlatency_apis.h"
 #include "current_time.h"
@@ -368,6 +369,9 @@ int main(int argc, char* argv[])
 
     // Init LatencyMeasurement
     LatencyMeasurementInit();
+
+    //Xwifi Diag Data Service Initialization
+    monitorService_xwifi_Init();
 
     /* SelfHeal Subdoc Version Mismatch
        webcfg_selfheal_start() spawns a detached thread that waits until the

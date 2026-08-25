@@ -1,5 +1,3 @@
-##########################################################################
-# If not stated otherwise in this file or this component's Licenses.txt
 # file the following copyright and licenses apply:
 #
 # Copyright 2015 RDK Management
@@ -16,13 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-if UNIT_TEST_DOCKER_SUPPORT
-SUBDIRS = test
-else
-if FEATURE_DEVICE_PRIORITIZATION
-SUBDIRS = DevicePrioritization LatencyMeasurement TandDSsp dmltad util xle_selfheal xwifi_diagdata ImageHealthChecker
-else
-SUBDIRS = LatencyMeasurement TandDSsp dmltad util xle_selfheal xwifi_diagdata ImageHealthChecker
-endif
-endif
 
+noinst_LTLIBRARIES = libCcspTandDSsp_xwifidiagdata.la
+
+libCcspTandDSsp_xwifidiagdata_la_CPPFLAGS = -I$(top_srcdir)/source/xwifi_diagdata/xWifiMonitor/include \
+                                             -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/rbus
+libCcspTandDSsp_xwifidiagdata_la_SOURCES = xwifiServiceMonitor.c
+
+libCcspTandDSsp_xwifidiagdata_la_LDFLAGS = -lsysevent -lsyscfg -lsecure_wrapper
+
+libCcspTandDSsp_xwifidiagdata_LDADD = $(libCcspTandDSsp_xwifidiagdata_DEPENDENCIES)
