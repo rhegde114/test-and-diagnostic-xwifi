@@ -20,9 +20,9 @@ if UNIT_TEST_DOCKER_SUPPORT
 SUBDIRS = test
 else
 if FEATURE_DEVICE_PRIORITIZATION
-SUBDIRS = DevicePrioritization LatencyMeasurement TandDSsp dmltad util xle_selfheal xwifi_diagdata ImageHealthChecker
+SUBDIRS = DevicePrioritization LatencyMeasurement xwifi_diagdata TandDSsp dmltad util xle_selfheal ImageHealthChecker
 else
-SUBDIRS = LatencyMeasurement TandDSsp dmltad util xle_selfheal xwifi_diagdata ImageHealthChecker
+SUBDIRS = LatencyMeasurement xwifi_diagdata TandDSsp dmltad util xle_selfheal ImageHealthChecker
 endif
 endif
 
