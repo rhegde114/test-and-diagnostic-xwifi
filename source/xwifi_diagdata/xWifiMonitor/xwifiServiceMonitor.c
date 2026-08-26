@@ -34,6 +34,8 @@
 #include "secure_wrapper.h"
 #include "xwifiServiceMonitor.h"
 
+#define BUF_SIZE 256
+
 pthread_t tid;
 /**
  * Execute commands and return results
