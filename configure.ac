@@ -149,6 +149,7 @@ AM_CONDITIONAL(FEATURE_WAREHOUSE_DIAGNOSTICS, test "x$WAREHOUSE_DIAGNOSTICS_ENAB
 
 AC_CONFIG_FILES(
   source/LatencyMeasurement/ServiceMonitor/Makefile
+  source/xwifi_diagdata/Makefile
   source/xwifi_diagdata/xWifiMonitor/Makefile
 	source/TandDSsp/Makefile
 	source/dmltad/Makefile
@@ -171,4 +172,3 @@ AC_CONFIG_FILES(
 AC_SUBST(UNIT_TEST_DOCKER_SUPPORT)
 
 AC_OUTPUT
-
