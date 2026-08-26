@@ -170,6 +170,7 @@ static bool mqtt_init(void)
 
 /* Each client entry in the JSON report is at most ~170 bytes. Size the
  * buffer so it can hold all MAX_CLIENT_DB entries plus array framing. */
+#define MQTT_TIMESTAMP_LEN     20
 #define MQTT_REPORT_ENTRY_MAX  170
 #define MQTT_REPORT_BUF_SIZE   (MAX_CLIENT_DB * MQTT_REPORT_ENTRY_MAX + 64)
 
@@ -185,6 +186,23 @@ static void mqtt_publish_report(char const *report, int len)
     if (rc != MOSQ_ERR_SUCCESS) {
         printf("[MQTT] publish failed rc=%d\n", rc);
     }
+}
+
+static bool format_publish_timestamp(char *timestamp, size_t timestamp_len)
+{
+    time_t now;
+    struct tm utc_time;
+
+    if (!timestamp || timestamp_len < MQTT_TIMESTAMP_LEN) {
+        return false;
+    }
+
+    now = time(NULL);
+    if (now == (time_t)-1 || !gmtime_r(&now, &utc_time)) {
+        return false;
+    }
+
+    return strftime(timestamp, timestamp_len, "%Y-%m-%d %H:%M:%S", &utc_time) > 0;
 }
 
 static client_record *find_or_create_client_record(char const *event_name, char const *mac)
@@ -228,9 +246,14 @@ static void publish_client_db_snapshot(void)
     int active_count = 0;
     time_t now = time(NULL);
     const int stale_threshold = MQTT_PUBLISH_PERIOD_SEC + MQTT_STALE_BUFFER_SEC;
+    char timestamp[MQTT_TIMESTAMP_LEN] = { 0 };
     char *buf = NULL;
     int pos = 0;
-    bool first = true;
+
+    if (!format_publish_timestamp(timestamp, sizeof(timestamp))) {
+        printf("[MQTT] Failed to create publish timestamp\n");
+        return;
+    }
 
     buf = (char *)malloc(MQTT_REPORT_BUF_SIZE);
     if (!buf) {
@@ -238,8 +261,12 @@ static void publish_client_db_snapshot(void)
         return;
     }
 
-    /* Build a single JSON array: [{"mac":...}, {"mac":...}, ...] */
-    buf[pos++] = '[';
+    pos = snprintf(buf, MQTT_REPORT_BUF_SIZE, "[{\"Time\":\"%s\"}", timestamp);
+    if (pos < 0 || pos >= MQTT_REPORT_BUF_SIZE) {
+        printf("[MQTT] Failed to build report timestamp\n");
+        free(buf);
+        return;
+    }
 
     for (int i = 0; i < MAX_CLIENT_DB; i++) {
         int n;
@@ -254,8 +281,7 @@ static void publish_client_db_snapshot(void)
         }
 
         n = snprintf(buf + pos, MQTT_REPORT_BUF_SIZE - pos,
-            "%s{\"mac\":\"%s\",\"rssi\":\"%s\",\"snr\":\"%s\",\"status\":\"%s\",\"reason\":\"%s\"}",
-            first ? "" : ",",
+            ",{\"mac\":\"%s\",\"rssi\":\"%s\",\"snr\":\"%s\",\"status\":\"%s\",\"reason\":\"%s\"}",
             g_client_db[i].mac,
             g_client_db[i].rssi[0]   ? g_client_db[i].rssi   : "NA",
             g_client_db[i].snr[0]    ? g_client_db[i].snr    : "NA",
@@ -269,7 +295,6 @@ static void publish_client_db_snapshot(void)
 
         pos += n;
         active_count++;
-        first = false;
     }
 
     buf[pos++] = ']';
@@ -683,11 +708,18 @@ static void client_state_handler(rbusHandle_t handle, rbusEvent_t const *event,
 
     if (should_publish) {
         /* Publish single-entry JSON array report for this state transition */
-        char state_buf[MQTT_REPORT_ENTRY_MAX + 4];
+        char timestamp[MQTT_TIMESTAMP_LEN] = { 0 };
+        char state_buf[MQTT_REPORT_ENTRY_MAX + 64];
         int state_len;
 
+        if (!format_publish_timestamp(timestamp, sizeof(timestamp))) {
+            printf("[MQTT] Failed to create publish timestamp\n");
+            return;
+        }
+
         state_len = snprintf(state_buf, sizeof(state_buf),
-            "[{\"mac\":\"%s\",\"rssi\":\"%s\",\"snr\":\"%s\",\"status\":\"%s\",\"reason\":\"%s\"}]",
+            "[{\"Time\":\"%s\"},{\"mac\":\"%s\",\"rssi\":\"%s\",\"snr\":\"%s\",\"status\":\"%s\",\"reason\":\"%s\"}]",
+            timestamp,
             mac_str,
             (rec && rec->rssi[0]) ? rec->rssi : "NA",
             (rec && rec->snr[0])  ? rec->snr  : "NA",
