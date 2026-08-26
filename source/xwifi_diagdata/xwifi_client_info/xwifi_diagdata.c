@@ -41,7 +41,7 @@
 #define MQTT_STALE_BUFFER_SEC 10
 #define MQTT_HOST_DEFAULT "96.102.99.5"
 #define MQTT_PORT_DEFAULT 443
-#define MQTT_TOPIC_DEFAULT "xwifi-dev-3826800/rdkb_telemetry_poc_topic"
+#define MQTT_TOPIC_DEFAULT "rdkb_telemetry_poc_topic"
 #define MQTT_CLIENT_ID_PREFIX "xwifi_dev"
 
 #ifndef UNREFERENCED_PARAMETER
