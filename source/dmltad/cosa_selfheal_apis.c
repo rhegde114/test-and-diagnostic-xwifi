@@ -179,7 +179,6 @@ void manage_self_heal_cron_state(BOOL isEnabled) {
     };
 
     const CronJob recovery_scripts[] = {
-        {"syscfg_recover.sh", NULL, 15},
         {"resource_monitor_recover.sh", NULL, 5}
     };
 
