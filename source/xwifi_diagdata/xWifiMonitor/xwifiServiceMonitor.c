@@ -36,6 +36,13 @@
 
 #define BUF_SIZE 256
 
+/* VAP instance numbers used by xwifi_diagdata for each supported radio band.
+ * These map to Device.WiFi.AccessPoint.<N>.* private-VAP indices and are
+ * fixed by the RDKB data model convention across platforms. */
+#define XWIFI_DIAGDATA_VAP_5G  "10"
+#define XWIFI_DIAGDATA_VAP_6G  "21"
+#define XWIFI_DIAGDATA_INTERVAL_MS "30000"
+
 pthread_t tid;
 /**
  * Execute commands and return results
@@ -94,6 +101,83 @@ bool getXfinityWifiEnableStatus()
     else
         return false;
 }
+
+/*
+ * Determine if this device supports a 6GHz radio by querying the number of
+ * WiFi radios present and inspecting each radio's OperatingFrequencyBand.
+ * This avoids hardcoding per-platform (XB7/XB8/XB10/...) logic and instead
+ * relies on the data model, which correctly reflects each device's actual
+ * hardware/software capability (5G-only vs 5G+6G).
+ */
+static bool is6GHzRadioSupported(void)
+{
+    char buf[16] = {0};
+    char cmd[256] = {0};
+    int radioCount = 0;
+    int i;
+
+    snprintf(cmd, sizeof(cmd),
+        "dmcli eRT getv Device.WiFi.RadioNumberOfEntries | grep 'value:' | cut -d':' -f3 | xargs");
+    if (cmd_exec(cmd, buf, sizeof(buf)) != 0 || buf[0] == '\0')
+    {
+        CcspTraceWarning(("%s: Failed to get RadioNumberOfEntries\n", __FUNCTION__));
+        return false;
+    }
+
+    radioCount = atoi(buf);
+    if (radioCount <= 0)
+    {
+        CcspTraceWarning(("%s: Invalid RadioNumberOfEntries value '%s'\n", __FUNCTION__, buf));
+        return false;
+    }
+
+    for (i = 1; i <= radioCount; i++)
+    {
+        char band[16] = {0};
+
+        memset(cmd, 0, sizeof(cmd));
+        snprintf(cmd, sizeof(cmd),
+            "dmcli eRT getv Device.WiFi.Radio.%d.OperatingFrequencyBand | grep 'value:' | cut -d':' -f3 | xargs",
+            i);
+        if (cmd_exec(cmd, band, sizeof(band)) != 0 || band[0] == '\0')
+        {
+            continue;
+        }
+
+        if (strstr(band, "6GHz") != NULL)
+        {
+            CcspTraceInfo(("%s: 6GHz radio detected at Device.WiFi.Radio.%d\n", __FUNCTION__, i));
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/*
+ * Build the xwifi_diagdata command line arguments dynamically based on the
+ * radios actually present/supported on this device, instead of relying on
+ * static per-platform macros.
+ */
+static void buildXwifiDiagDataArgs(char *args, size_t args_len)
+{
+    if (!args || args_len == 0)
+    {
+        return;
+    }
+
+    if (is6GHzRadioSupported())
+    {
+        snprintf(args, args_len, "-v %s,%s -i %s",
+            XWIFI_DIAGDATA_VAP_5G, XWIFI_DIAGDATA_VAP_6G, XWIFI_DIAGDATA_INTERVAL_MS);
+    }
+    else
+    {
+        snprintf(args, args_len, "-v %s -i %s",
+            XWIFI_DIAGDATA_VAP_5G, XWIFI_DIAGDATA_INTERVAL_MS);
+    }
+}
+
 void *executeXwifiDiagDataService(void *data)
 {
     pthread_detach(pthread_self());
@@ -111,8 +195,13 @@ void *executeXwifiDiagDataService(void *data)
     {
         if (getXfinityWifiEnableStatus())
         {
+            char xwifiDiagDataArgs[64] = {0};
+
+            buildXwifiDiagDataArgs(xwifiDiagDataArgs, sizeof(xwifiDiagDataArgs));
+
             CcspTraceInfo(("%s: Initializing publicVap_util. \n", __FUNCTION__));
-            v_secure_system("/usr/bin/xwifi_diagdata -v 10,21 -i 30000");
+            CcspTraceInfo(("%s: Starting xwifi_diagdata with args: %s\n", __FUNCTION__, xwifiDiagDataArgs));
+            v_secure_system("/usr/bin/xwifi_diagdata %s", xwifiDiagDataArgs);
             break;
         }
         sleep(2);
