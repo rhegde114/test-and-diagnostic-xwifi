@@ -155,26 +155,24 @@ static bool is6GHzRadioSupported(void)
 }
 
 /*
- * Build the xwifi_diagdata command line arguments dynamically based on the
- * radios actually present/supported on this device, instead of relying on
- * static per-platform macros.
+ * Build the VAP list ("10" or "10,21") dynamically based on the radios
+ * actually present/supported on this device, instead of relying on static
+ * per-platform macros.
  */
-static void buildXwifiDiagDataArgs(char *args, size_t args_len)
+static void buildXwifiDiagDataVapList(char *vapList, size_t vapList_len)
 {
-    if (!args || args_len == 0)
+    if (!vapList || vapList_len == 0)
     {
         return;
     }
 
     if (is6GHzRadioSupported())
     {
-        snprintf(args, args_len, "-v %s,%s -i %s",
-            XWIFI_DIAGDATA_VAP_5G, XWIFI_DIAGDATA_VAP_6G, XWIFI_DIAGDATA_INTERVAL_MS);
+        snprintf(vapList, vapList_len, "%s,%s", XWIFI_DIAGDATA_VAP_5G, XWIFI_DIAGDATA_VAP_6G);
     }
     else
     {
-        snprintf(args, args_len, "-v %s -i %s",
-            XWIFI_DIAGDATA_VAP_5G, XWIFI_DIAGDATA_INTERVAL_MS);
+        snprintf(vapList, vapList_len, "%s", XWIFI_DIAGDATA_VAP_5G);
     }
 }
 
@@ -195,13 +193,14 @@ void *executeXwifiDiagDataService(void *data)
     {
         if (getXfinityWifiEnableStatus())
         {
-            char xwifiDiagDataArgs[64] = {0};
+            char vapList[32] = {0};
 
-            buildXwifiDiagDataArgs(xwifiDiagDataArgs, sizeof(xwifiDiagDataArgs));
+            buildXwifiDiagDataVapList(vapList, sizeof(vapList));
 
             CcspTraceInfo(("%s: Initializing publicVap_util. \n", __FUNCTION__));
-            CcspTraceInfo(("%s: Starting xwifi_diagdata with args: %s\n", __FUNCTION__, xwifiDiagDataArgs));
-            v_secure_system("/usr/bin/xwifi_diagdata %s", xwifiDiagDataArgs);
+            CcspTraceInfo(("%s: Starting xwifi_diagdata with -v %s -i %s\n",
+                __FUNCTION__, vapList, XWIFI_DIAGDATA_INTERVAL_MS));
+            v_secure_system("/usr/bin/xwifi_diagdata -v %s -i %s", vapList, XWIFI_DIAGDATA_INTERVAL_MS);
             break;
         }
         sleep(2);
